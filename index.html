@@ -422,6 +422,16 @@ h1 {
     align-items: center;
 }
 
+#particles-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .file-list {
@@ -489,6 +499,7 @@ h1 {
     </style>
 </head>
 <body>
+    <canvas id="particles-canvas"></canvas>
     <!-- Age Verification Popup -->
     <div class="age-verification" id="age-verification">
         <div class="age-verification-content">
@@ -721,6 +732,167 @@ h1 {
         function leaveSite() {
             window.location.href = "https://www.google.com";
         }
+
+        // Particles Background
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+        let animationFrame;
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Particle class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.color = this.getRandomColor();
+            }
+
+            getRandomColor() {
+                const colors = [
+                    'rgba(0, 243, 255, 0.7)',  // neon blue
+                    'rgba(188, 19, 254, 0.7)',  // neon purple
+                    'rgba(118, 146, 199, 0.7)'  // accent color
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                // Move particles
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Mouse interaction - particles are attracted to mouse position
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 150) {
+                    const forceDirectionX = dx / distance;
+                    const forceDirectionY = dy / distance;
+                    const force = (150 - distance) / 150;
+                    
+                    this.speedX += forceDirectionX * force * 0.2;
+                    this.speedY += forceDirectionY * force * 0.2;
+                }
+                
+                // Add some friction to prevent particles from accelerating infinitely
+                this.speedX *= 0.98;
+                this.speedY *= 0.98;
+                
+                // Boundary check
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.speedX = -this.speedX;
+                }
+                if (this.y < 0 || this.y > canvas.height) {
+                    this.speedY = -this.speedY;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Initialize particles
+        function initParticles() {
+            particles = [];
+            const particleCount = Math.min(Math.floor(window.innerWidth * window.innerHeight / 10000), 100);
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // Animation loop
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            
+            // Connect particles with lines if they're close enough
+            connectParticles();
+            
+            animationFrame = requestAnimationFrame(animateParticles);
+        }
+
+        // Connect nearby particles with lines
+        function connectParticles() {
+            const maxDistance = 150;
+            
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < maxDistance) {
+                        // Set line opacity based on distance
+                        const opacity = 1 - (distance / maxDistance);
+                        ctx.strokeStyle = `rgba(118, 146, 199, ${opacity * 0.5})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // Track mouse position
+        function updateMousePosition(e) {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        }
+
+        // Initialize particles system
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            initParticles();
+            animateParticles();
+            
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                initParticles();
+            });
+            
+            window.addEventListener('mousemove', updateMousePosition);
+            
+            // Touch support for mobile devices
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    mouseX = e.touches[0].clientX;
+                    mouseY = e.touches[0].clientY;
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Clean up animation when page is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                cancelAnimationFrame(animationFrame);
+            } else {
+                animateParticles();
+            }
+        });
 
         // Initial load
         fetchFiles();
