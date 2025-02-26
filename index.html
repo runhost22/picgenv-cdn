@@ -401,6 +401,25 @@ h1 {
     padding-left: 5px;
 }
 
+.download-icon {
+    display: inline-block;
+    margin-left: 10px;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.download-icon:hover {
+    color: var(--neon-blue);
+    transform: scale(1.1);
+}
+
+/* Simple download icon using CSS */
+.download-icon::before {
+    content: "⬇️";
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .file-list {
@@ -586,6 +605,18 @@ h1 {
             }
         }
 
+        function downloadFile(event, url, filename) {
+            event.stopPropagation(); // Prevent the file preview from opening
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         function renderFiles() {
             const list = document.getElementById('file-list');
             list.innerHTML = '';
@@ -616,7 +647,10 @@ h1 {
 
                 item.innerHTML = `
                     <div class="file-info">
-                        <span class="file-name">${file.name}</span>
+                        <div>
+                            <span class="file-name">${file.name}</span>
+                            <span class="download-icon" title="Download ${file.name}" onclick="downloadFile(event, '${file.url}', '${file.name}')"></span>
+                        </div>
                         <span class="file-details">
                             <span>${formatBytes(file.size)}</span>
                             <span>•</span>
