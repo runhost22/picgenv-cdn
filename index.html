@@ -577,18 +577,48 @@ h1 {
                             const lastModified = commitData.length 
                                 ? commitData[0].commit.author.date 
                                 : file.last_modified;
+                            
+                            // Ensure the download URL is properly encoded
+                            let downloadUrl = file.download_url;
+                            
+                            // If the URL is not already encoded, encode it
+                            // This handles special characters in the URL path
+                            if (downloadUrl && downloadUrl.includes(' ')) {
+                                // Split the URL into parts (before and after the query string if any)
+                                const [urlPath, queryString] = downloadUrl.split('?');
+                                
+                                // Encode the URL path part
+                                const encodedPath = urlPath.split('/').map(segment => 
+                                    // Don't encode the protocol or domain parts
+                                    segment.includes(':') ? segment : encodeURIComponent(segment)
+                                ).join('/');
+                                
+                                // Reconstruct the URL with the query string if it exists
+                                downloadUrl = encodedPath + (queryString ? `?${queryString}` : '');
+                            }
 
                             return {
                                 name: file.name,
-                                url: file.download_url,
+                                url: downloadUrl,
                                 size: file.size,
                                 date: lastModified
                             };
                         } catch (err) {
                             console.error(`Error fetching commit data for ${file.name}:`, err);
+                            
+                            // Apply the same URL encoding logic for the error case
+                            let downloadUrl = file.download_url;
+                            if (downloadUrl && downloadUrl.includes(' ')) {
+                                const [urlPath, queryString] = downloadUrl.split('?');
+                                const encodedPath = urlPath.split('/').map(segment => 
+                                    segment.includes(':') ? segment : encodeURIComponent(segment)
+                                ).join('/');
+                                downloadUrl = encodedPath + (queryString ? `?${queryString}` : '');
+                            }
+                            
                             return {
                                 name: file.name,
-                                url: file.download_url,
+                                url: downloadUrl,
                                 size: file.size,
                                 date: file.last_modified
                             };
@@ -606,15 +636,33 @@ h1 {
         }
 
         function downloadFile(event, url, filename) {
-            event.stopPropagation(); // Prevent the file preview from opening
+            if (event) {
+                event.stopPropagation(); // Prevent the file preview from opening
+                event.preventDefault(); // Prevent default behavior
+            }
             
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            try {
+                // Create a temporary anchor element
+                const a = document.createElement('a');
+                
+                // Set the download attribute with the filename
+                a.download = filename;
+                
+                // Set the href to the URL
+                a.href = url;
+                
+                // Append to the body, click, and remove
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                console.log(`Download initiated for: ${filename}`);
+            } catch (error) {
+                console.error(`Error downloading file: ${error.message}`);
+                
+                // Fallback method if the above fails
+                window.open(url, '_self');
+            }
         }
 
         function renderFiles() {
@@ -645,22 +693,49 @@ h1 {
                     `;
                 }
 
-                item.innerHTML = `
-                    <div class="file-info">
-                        <div>
-                            <span class="file-name">${file.name}</span>
-                            <span class="download-icon" title="Download ${file.name}" onclick="downloadFile(event, '${file.url}', '${file.name}')"></span>
-                        </div>
-                        <span class="file-details">
-                            <span>${formatBytes(file.size)}</span>
-                            <span>•</span>
-                            <span>${timeAgo(file.date)}</span>
-                        </span>
-                    </div>
+                // Create file info container
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+                
+                // Create name container with download icon
+                const nameContainer = document.createElement('div');
+                
+                // Add file name
+                const fileName = document.createElement('span');
+                fileName.className = 'file-name';
+                fileName.textContent = file.name;
+                nameContainer.appendChild(fileName);
+                
+                // Add download icon with proper event handling
+                const downloadIcon = document.createElement('span');
+                downloadIcon.className = 'download-icon';
+                downloadIcon.title = `Download ${file.name}`;
+                downloadIcon.addEventListener('click', (event) => {
+                    downloadFile(event, file.url, file.name);
+                });
+                nameContainer.appendChild(downloadIcon);
+                
+                // Add file details
+                const fileDetails = document.createElement('span');
+                fileDetails.className = 'file-details';
+                fileDetails.innerHTML = `
+                    <span>${formatBytes(file.size)}</span>
+                    <span>•</span>
+                    <span>${timeAgo(file.date)}</span>
                 `;
                 
+                // Assemble the file info
+                fileInfo.appendChild(nameContainer);
+                fileInfo.appendChild(fileDetails);
+                
+                // Add file info to item
+                item.appendChild(fileInfo);
                 item.appendChild(hoverPreview);
-                item.onclick = () => previewFile(file);
+                
+                // Add click event for preview
+                item.addEventListener('click', () => previewFile(file));
+                
+                // Add to list
                 list.appendChild(item);
             });
         }
