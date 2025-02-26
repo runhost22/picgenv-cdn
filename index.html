@@ -493,7 +493,7 @@
                         try {
                             const commitResponse = await fetch(
                                 `https://free-lynx-10.deno.dev/commits?path=${encodeURIComponent(cdn + '/' + file.name)}&per_page=1`,
-                                { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
+                                
                             );
 
                             const commitData = await commitResponse.json();
