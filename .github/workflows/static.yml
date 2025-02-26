@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload only the index.html file inside the cdn folder
-          path: 'cdn/index.html'
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
