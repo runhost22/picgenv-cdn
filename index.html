@@ -611,8 +611,8 @@ h1 {
             const list = document.getElementById('file-list');
             list.innerHTML = '';
             
-            const start = (currentPage - 1) * 14;
-            const end = start + 14;
+            const start = (currentPage - 1) * 10;
+            const end = start + 10;
             const paginatedFiles = files.slice(start, end);
 
             paginatedFiles.forEach(file => {
