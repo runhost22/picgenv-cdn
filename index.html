@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>PicGenV</title>
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Orbitron:wght@500;700&display=swap');
@@ -401,6 +402,26 @@ h1 {
     padding-left: 5px;
 }
 
+.download-icon {
+    margin-left: 10px;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.download-icon:hover {
+    transform: scale(1.2);
+    opacity: 1;
+    color: var(--neon-blue);
+    text-shadow: 0 0 5px var(--neon-blue);
+}
+
+.file-name-container {
+    display: flex;
+    align-items: center;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .file-list {
@@ -616,7 +637,10 @@ h1 {
 
                 item.innerHTML = `
                     <div class="file-info">
-                        <span class="file-name">${file.name}</span>
+                        <div class="file-name-container">
+                            <span class="file-name">${file.name}</span>
+                            <i class="fas fa-download download-icon" title="Download ${file.name}"></i>
+                        </div>
                         <span class="file-details">
                             <span>${formatBytes(file.size)}</span>
                             <span>•</span>
@@ -627,6 +651,18 @@ h1 {
                 
                 item.appendChild(hoverPreview);
                 item.onclick = () => previewFile(file);
+                
+                // Add event listener for download icon
+                setTimeout(() => {
+                    const downloadIcon = item.querySelector('.download-icon');
+                    if (downloadIcon) {
+                        downloadIcon.onclick = (e) => {
+                            e.stopPropagation(); // Prevent opening the preview
+                            window.open(file.url, '_blank');
+                        };
+                    }
+                }, 0);
+                
                 list.appendChild(item);
             });
         }
