@@ -481,8 +481,7 @@
         async function fetchFiles() {
             try {
                 const response = await fetch(
-                    `https://api.github.com/repos/${username}/${repo}/contents/${folder}`,
-                    { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
+                    `https://free-lynx-10.deno.dev`
                 );
 
                 if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
