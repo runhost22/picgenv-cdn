@@ -1,0 +1,17 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "https://runhost22.github.io/picgenv-cdn/"
+    },
+    {
+      "source": "/picgenv/cdn/:imagePath",
+      "destination": "https://raw.githubusercontent.com/runhost22/picgenv-cdn/main/cdn/:imagePath"
+    },
+    {
+      "source": "/picgenv/cdn/dc-files/:username/:file",
+      "destination": "https://raw.githubusercontent.com/runhost22/picgenv-cdn/main/cdn/dc-files/:username/:file"
+    }
+  ]
+
+}
